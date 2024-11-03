@@ -15,3 +15,8 @@ Para rodar o script, siga as instruções abaixo:
    ```bash
    node index.js
    ```
+
+3. Acesse a url:
+   ```bash
+   http://localhost:3000
+   ```
