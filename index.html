@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download Capitulos Arthur Scan</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center">Baixar Imagens do Manga</h1>
+        <form id="download-form">
+            <div class="form-group">
+                <label for="manga-url">URL do Manga:</label>
+                <input type="text" class="form-control" id="manga-url" placeholder="Cole a URL do mangá aqui" required>
+            </div>
+            <div class="form-group">
+                <label for="cap-count">Quantidade de Capítulos:</label>
+                <input type="number" class="form-control" id="cap-count" min="1" value="1" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Baixar Capítulos</button>
+        </form>
+        
+        <h2 class="mt-5">Status de Download</h2>
+        <table class="table table-striped mt-3">
+            <thead>
+                <tr>
+                    <th scope="col">Capítulo</th>
+                    <th scope="col">URL</th>
+                    <th scope="col">Status</th>
+                </tr>
+            </thead>
+            <tbody id="download-status-body">
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        document.getElementById('download-form').addEventListener('submit', async (event) => {
+            event.preventDefault(); 
+
+            const mangaUrl = document.getElementById('manga-url').value;
+            const capCount = document.getElementById('cap-count').value;
+
+            const downloadStatusBody = document.getElementById('download-status-body');
+            downloadStatusBody.innerHTML = '';
+
+            for (let i = 1; i <= parseInt(capCount); i++) {
+                await createFetch(mangaUrl, i);
+            }
+        });
+
+        async function createFetch(mangaUrl, capCount) {
+            const row = document.createElement('tr');
+            const chapterCell = document.createElement('td');
+            const urlCell = document.createElement('td');
+            const statusCell = document.createElement('td');
+
+            const chapterUrl = `${mangaUrl}/capitulo-${capCount}`;
+            chapterCell.textContent = `Capítulo ${capCount}`;
+            urlCell.textContent = chapterUrl;
+            statusCell.textContent = 'Iniciando...';
+
+            row.appendChild(chapterCell);
+            row.appendChild(urlCell);
+            row.appendChild(statusCell);
+            document.getElementById('download-status-body').appendChild(row);
+
+            try {
+                const response = await fetch('http://localhost:3000/proxy', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        url: chapterUrl
+                    }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Erro ao baixar o ZIP: ' + response.statusText);
+                }
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `capitulo-${capCount}.zip`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                a.remove();
+
+                statusCell.textContent = 'Baixado com sucesso!';
+            } catch (error) {
+                console.error('Erro:', error);
+                statusCell.textContent = 'Erro ao baixar.';
+            }
+        }
+    </script>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
